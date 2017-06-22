@@ -94,13 +94,13 @@ class OLEReader
     private $minifatSectors = [];
 
     /**
-     * @param $pFilename string Filename
+     * @param $filename string Filename
      *
      * @throws \Exception
      */
-    public function __construct($pFilename)
+    public function __construct($filename)
     {
-        $this->filename = $pFilename;
+        $this->filename = $filename;
         $this->read();
     }
 
@@ -129,7 +129,7 @@ class OLEReader
         try {
             $this->header = new OLEHeader($this->data);
         } catch (\InvalidArgumentException $e) {
-            throw new \InvalidArgumentException("File {$this->filename} is not a valid OLE file");
+            throw new \InvalidArgumentException("File {$this->filename} is not a valid OLE file", 0, $e);
         }
 
         $this->loadFat();
