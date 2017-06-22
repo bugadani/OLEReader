@@ -179,9 +179,9 @@ class OLEReader
                 $this->ministream = $this->readStream($this->rootDirectory->getFirstSector(), $miniStreamSize, true);
             }
 
-            return $this->readStreamInternal($this->ministream, $startSector,0, $size, $this->minifatSectors, $this->header->getMiniSectorSize());
+            return self::readStreamInternal($this->ministream, $startSector,0, $size, $this->minifatSectors, $this->header->getMiniSectorSize());
         } else {
-            return $this->readStreamInternal($this->data, $startSector,$this->header->getSectorSize(), $size, $this->fatSectors, $this->header->getSectorSize());
+            return self::readStreamInternal($this->data, $startSector,$this->header->getSectorSize(), $size, $this->fatSectors, $this->header->getSectorSize());
         }
     }
 
@@ -205,7 +205,7 @@ class OLEReader
         $this->directoryStream = $this->readStream($directorySector, self::UNKNOWN_SIZE, false);
     }
 
-    private function readStreamInternal($data, $startSector, $offset, $size, $fatSectors, $sectorSize)
+    private static function readStreamInternal($data, $startSector, $offset, $size, $fatSectors, $sectorSize)
     {
         //max size
         if ($size == self::UNKNOWN_SIZE) {
@@ -231,7 +231,7 @@ class OLEReader
                 break;
             }
 
-            if ($sect < 0 || $sect > count($this->fatSectors)) {
+            if ($sect < 0 || $sect > count($fatSectors)) {
                 throw new \InvalidArgumentException("Incorrect sector index {$sect}");
             }
 
