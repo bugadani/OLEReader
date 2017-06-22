@@ -1,0 +1,17 @@
+{
+  "name": "bugadani/ole_reader",
+  "description": "Reader library for OLE files",
+  "minimum-stability": "dev",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dániel Buga",
+      "email": "bugadani@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "OLEReader\\": "Src/"
+    }
+  }
+}
