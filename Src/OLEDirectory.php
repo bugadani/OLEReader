@@ -36,6 +36,7 @@ class OLEDirectory extends BaseFile
         }
 
         $child = $this->owner->loadDirEntry($sid);
+        $child->setParent($this);
 
         $this->appendChild($child->left);
         $this->children[] = $child;
@@ -63,6 +64,13 @@ class OLEDirectory extends BaseFile
         }
 
         return $this->childNameMap[ strtolower($name) ];
+    }
+
+    public function listFiles()
+    {
+        return array_map(function (BaseFile $child) {
+            return $child->getName();
+        }, $this->children);
     }
 
     public function getSize()

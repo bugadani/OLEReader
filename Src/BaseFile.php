@@ -70,6 +70,11 @@ class BaseFile
      */
     protected $sid;
 
+    /**
+     * @var OLEDirectory
+     */
+    private $parent;
+
     protected function __construct(OLEReader $owner, $sid, $name, $entry)
     {
         $this->owner = $owner;
@@ -101,6 +106,36 @@ class BaseFile
             if ($this->size > 0) {
                 $this->isMinifat = ($this->size < $owner->getHeader()->getMiniStreamCutoffSize());
             }
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    protected function setParent(OLEDirectory $parent)
+    {
+        $this->parent = $parent;
+    }
+
+    /**
+     * @return OLEDirectory
+     */
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    public function getPath()
+    {
+        if (isset($this->parent)) {
+            return $this->parent->getPath() . '/' . $this->getName();
+        } else {
+            return $this->getName();
         }
     }
 

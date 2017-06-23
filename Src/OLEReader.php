@@ -70,16 +70,16 @@ class OLEReader
 
     private $data = '';
 
-    public $workbook = null;
-    public $summaryInformation = null;
-    public $documentSummaryInformation = null;
-    public $filename;
+    private $workbook = null;
+    private $summaryInformation = null;
+    private $documentSummaryInformation = null;
+    private $filename;
 
     /**
      * @var OLEHeader
      */
     private $header;
-    public $isFileRead = false;
+    private $isFileRead = false;
     private $minifatLoaded;
     private $ministream;
     private $directoryEntires;
@@ -101,7 +101,6 @@ class OLEReader
     public function __construct($filename)
     {
         $this->filename = $filename;
-        $this->read();
     }
 
     public static function registerTypes()
@@ -115,6 +114,10 @@ class OLEReader
 
     public function getHeader()
     {
+        if (!$this->isFileRead) {
+            $this->read();
+        }
+
         return $this->header;
     }
 
@@ -123,6 +126,7 @@ class OLEReader
      */
     private function read()
     {
+        $this->isFileRead = true;
         // Get the file data
         $this->data = file_get_contents($this->filename);
 
@@ -134,12 +138,11 @@ class OLEReader
 
         $this->loadFat();
         $this->loadDirectory($this->header->getFirstDirectorySector());
-        $this->isFileRead = true;
     }
 
     private function loadDirectory($directorySector)
     {
-        $this->openDirectory($directorySector);
+        $this->directoryStream = $this->readStream($directorySector, self::UNKNOWN_SIZE, false);
 
         $this->rootDirectory = $this->loadDirEntry(0);
     }
@@ -153,16 +156,25 @@ class OLEReader
         return $this->rootDirectory;
     }
 
-    public function getFile($string)
+    /**
+     * Returns a file or directory with the given path
+     *
+     * @param string $path
+     * @return BaseFile
+     */
+    public function getFile($path)
     {
         if (!$this->isFileRead) {
             $this->read();
         }
 
-        $path = explode("/", $string);
+        $pathArray = explode("/", $path);
         /** @var OLEDirectory $dir */
         $dir = $this->rootDirectory;
-        foreach ($path as $part) {
+        foreach ($pathArray as $part) {
+            if (!$dir instanceof OLEDirectory) {
+                throw new \UnexpectedValueException("Cannot get child of file {$dir->getName()}");
+            }
             $dir = $dir->getChild($part);
         }
 
@@ -171,24 +183,38 @@ class OLEReader
 
     public function readStream($startSector, $size = self::UNKNOWN_SIZE, $forceFat = false)
     {
+        if (!$this->isFileRead) {
+            $this->read();
+        }
+
         if ($size !== self::UNKNOWN_SIZE && $size < $this->header->getMiniStreamCutoffSize() && !$forceFat) {
             if (!$this->minifatLoaded) {
                 $this->loadMinifat();
 
-                $miniStreamSize = $this->rootDirectory->getSize();
+                $miniStreamSize   = $this->rootDirectory->getSize();
                 $this->ministream = $this->readStream($this->rootDirectory->getFirstSector(), $miniStreamSize, true);
             }
 
-            return self::readStreamInternal($this->ministream, $startSector,0, $size, $this->minifatSectors, $this->header->getMiniSectorSize());
+            return self::readStreamInternal($this->ministream, $startSector, 0, $size, $this->minifatSectors, $this->header->getMiniSectorSize());
         } else {
-            return self::readStreamInternal($this->data, $startSector,$this->header->getSectorSize(), $size, $this->fatSectors, $this->header->getSectorSize());
+            return self::readStreamInternal($this->data, $startSector, $this->header->getSectorSize(), $size, $this->fatSectors, $this->header->getSectorSize());
         }
     }
 
+    /**
+     * @param $sid
+     * @internal
+     *
+     * @return BaseFile
+     */
     public function loadDirEntry($sid)
     {
         if ($sid < 0) {
             throw new \OutOfBoundsException("\$sid must be >= 0, currently {$sid}");
+        }
+
+        if (!$this->isFileRead) {
+            $this->read();
         }
 
         if (!isset($this->directoryEntires[ $sid ])) {
@@ -198,11 +224,6 @@ class OLEReader
         }
 
         return $this->directoryEntires[ $sid ];
-    }
-
-    private function openDirectory($directorySector)
-    {
-        $this->directoryStream = $this->readStream($directorySector, self::UNKNOWN_SIZE, false);
     }
 
     private static function readStreamInternal($data, $startSector, $offset, $size, $fatSectors, $sectorSize)
@@ -225,9 +246,12 @@ class OLEReader
             throw new \InvalidArgumentException("Incorrect sector index for empty stream");
         }
 
-        $sect   = $startSector;
+        $sect = $startSector;
         for ($i = 0; $i < $nbSectors; $i++) {
             if ($sect === self::END_OF_CHAIN) {
+                if (!$isUnknownSize) {
+                    throw new \UnexpectedValueException("Could not read {$size} bytes because the end of chain was reached");
+                }
                 break;
             }
 
