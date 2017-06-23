@@ -59,7 +59,7 @@ class OLEDirectory extends BaseFile
     public function getChild($name)
     {
         if (!isset($this->childNameMap[ strtolower($name) ])) {
-            throw new \OutOfBoundsException("File not found: {$name}");
+            throw new \OutOfBoundsException("File not found: {$name}. Files in directory: " . implode(', ', array_keys($this->childNameMap)));
         }
 
         return $this->childNameMap[ strtolower($name) ];
