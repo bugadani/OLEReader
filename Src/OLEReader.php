@@ -184,6 +184,29 @@ class OLEReader
         return $dir;
     }
 
+    public function hasFile($path)
+    {
+        if (!$this->isFileRead) {
+            $this->read();
+        }
+
+        $pathArray = explode("/", $path);
+        /** @var OLEDirectory $dir */
+        $dir = $this->rootDirectory;
+        foreach ($pathArray as $part) {
+            if (!$dir instanceof OLEDirectory) {
+                throw new \UnexpectedValueException("Cannot get child of file {$dir->getName()}");
+            }
+            if ($dir->hasChild($part)) {
+                $dir = $dir->getChild($part);
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function readStream($startSector, $size = self::UNKNOWN_SIZE, $forceFat = false)
     {
         if (!$this->isFileRead) {

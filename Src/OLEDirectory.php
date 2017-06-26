@@ -66,6 +66,11 @@ class OLEDirectory extends BaseFile
         return $this->childNameMap[ strtolower($name) ];
     }
 
+    public function hasChild($name)
+    {
+        return isset($this->childNameMap[ strtolower($name) ]);
+    }
+
     public function listFiles()
     {
         return array_map(function (BaseFile $child) {
