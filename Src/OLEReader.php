@@ -100,6 +100,9 @@ class OLEReader
      */
     public function __construct($filename)
     {
+        if (!is_file($filename)) {
+            throw new \InvalidArgumentException("{$filename} is not a file");
+        }
         $this->filename = $filename;
     }
 
