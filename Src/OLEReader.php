@@ -100,10 +100,24 @@ class OLEReader
      */
     public function __construct($filename)
     {
-        if (!is_file($filename)) {
+        if (is_readable($filename) || (substr($filename, 0, 6) === 'zip://' && self::zipped_file_exists($filename))) {
+            $this->filename = $filename;
+        } else {
             throw new \InvalidArgumentException("{$filename} is not a file");
         }
-        $this->filename = $filename;
+    }
+
+    private static function zipped_file_exists($fileName = '')
+    {
+        if ($fileName !== '') {
+            $fh     = fopen($fileName, 'r');
+            $exists = ($fh !== false);
+            fclose($fh);
+
+            return $exists;
+        }
+
+        return false;
     }
 
     public static function registerTypes()
