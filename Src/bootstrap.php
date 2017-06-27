@@ -1,0 +1,3 @@
+<?php
+
+\OLEReader\OLEReader::registerTypes();

@@ -10,6 +10,7 @@
     }
   ],
   "autoload": {
+    "files": ["Src/bootstrap.php"],
     "psr-4": {
       "OLEReader\\": "Src/"
     }
